@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<version>0.2</version>
+<date>20171029T130641</date>
+<Server Port="4020"/>
+<NTP Enable="true" IP="172.28.1.3" Difference="5"/>
+<Database Enable="true" URL="http://172.28.8.8:8080/gwebend/"/>
+<CheckDisk Enable="false" MinimumFree="100"/>
+<LocalStorage>
+    <DiskNumber Value="1"/>
+    <DiskIndex Value="3"/>
+    <PathRoot#1 Name="/data"/>
+</LocalStorage>
