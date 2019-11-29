@@ -18,7 +18,7 @@
 
 using boost::asio::io_service;
 
-class IOServiceKeep : private boost::noncopyable {
+class IOServiceKeep {
 public:
 	// 构造函数与析构函数
 	IOServiceKeep();

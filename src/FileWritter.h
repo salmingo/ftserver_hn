@@ -17,7 +17,9 @@
 #include <string.h>
 #include <string>
 #include "MessageQueue.h"
-#include "DataTransfer.h"
+#include "DBCurl.h"
+#include "tcpasio.h"
+#include "AsciiProtocol.h"
 
 using std::string;
 
@@ -72,11 +74,14 @@ protected:
 	// 成员变量
 	string pathRoot_;	//< 当前根路径
 	nfileQueue quenf_;	//< 文件队列
-	boost::shared_ptr<DataTransfer> db_;	//< 数据库访问接口
+	boost::shared_ptr<DBCurl> dbt_;	//< 数据库访问接口
 	boost::condition_variable cvfile_;	//< 条件变量: 新的数据需要存储
 	threadptr thrdmntr_;		//< 监测线程
 	bool running_;	//< 运行标志
 	string pathNotify_;	//< 当改变存储路径时, 在文件中记录该变更
+
+	TcpCPtr tcpc_dp_;	//< 网络连接: 数据处理
+	AscProtoPtr ascproto_;	//< 通信协议封装接口
 
 public:
 	// 接口
@@ -102,6 +107,14 @@ public:
 	 * @param nfptr 待保存文件
 	 */
 	void NewFile(nfileptr nfptr);
+	/*!
+	 * @brief 建立与网络连接的关联
+	 */
+	void CoupleNetwork(const TcpCPtr tcpc);
+	/*!
+	 * @brief 解除与网络连接的关联
+	 */
+	void DecoupleNetowrk();
 
 protected:
 	// 功能

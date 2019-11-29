@@ -4,6 +4,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include "tcpasio.h"
+#include "GLog.h"
 
 using std::string;
 using namespace boost::asio;

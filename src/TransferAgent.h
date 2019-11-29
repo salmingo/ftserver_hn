@@ -36,12 +36,14 @@ protected:
 	// 成员变量
 	param_config param_;		//< 配置参数
 	FileWritePtr fwptr_;		//< 文件写盘接口
-	TcpSPtr tcpsrv_;			//< 网络服务器
+	TcpSPtr tcps_fs_;			//< 网络服务器: 文件服务
+	TcpSPtr tcps_dp_;			//< 网络服务器: 数据处理
+	TcpCPtr tcpc_dp_;			//< 网络连接: 数据处理
 	NTPPtr ntp_;				//< NTP接口
-	threadptr thrdIdle_;			//< 线程: 空闲检查文件接收器有效性
-	threadptr thrdAutoFree_;		//< 线程: 定时磁盘清除线程
+	threadptr thrdIdle_;		//< 线程: 空闲检查文件接收器有效性
+	threadptr thrdAutoFree_;	//< 线程: 定时磁盘清除线程
 	boost::mutex mtx_filercv_;	//< 互斥锁, 文件接收器
-	FileRcvVec filercv_;			//< 文件接收接口
+	FileRcvVec filercv_;		//< 文件接收接口
 
 public:
 	// 接口
@@ -65,6 +67,14 @@ protected:
 	 */
 	void network_accept(const TcpCPtr&, const long);
 	/*!
+	 * @brief 处理数据处理的信息
+	 * @param client 网络资源
+	 * @param ec     错误代码. 0: 正确
+	 * @note
+	 * 仅当数据处理软件断开网络连接时收到消息
+	 */
+	void receive_dp(const long client, const long ec);
+	/*!
 	 * @brief 查找可用的本地存储盘区
 	 * @return
 	 * 可用盘区地址
@@ -74,15 +84,6 @@ protected:
 	 * @brief 清除本地存储空间
 	 */
 	void free_storage();
-	/*!
-	 * @brief 清除模板存储空间
-	 */
-	void free_template();
-	/*!
-	 * @brief 清除模板目录内大容量文件
-	 * @param dirname 目录名称
-	 */
-	void free_template_directory(const char *dirname);
 	/*!
 	 * @brief 线程, 检查FileReceiver的有效性
 	 */

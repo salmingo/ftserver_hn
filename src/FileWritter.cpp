@@ -6,9 +6,14 @@
 
 #include <boost/make_shared.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/format.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <stdio.h>
 #include "FileWritter.h"
 #include "GLog.h"
+
+using namespace boost;
+using namespace boost::posix_time;
 
 FileWritePtr make_filewritter() {
 	return boost::make_shared<FileWritter>();
@@ -16,6 +21,7 @@ FileWritePtr make_filewritter() {
 
 FileWritter::FileWritter() {
 	running_ = false;
+	ascproto_ = boost::make_shared<AsciiProtocol>();
 	thrdmntr_.reset(new boost::thread(boost::bind(&FileWritter::thread_monitor, this)));
 }
 
@@ -43,8 +49,8 @@ void FileWritter::UpdateStorage(const char* path) {
 }
 
 void FileWritter::SetDatabase(bool enabled, const char* url) {
-	if (!enabled) db_.reset();
-	else if(url) db_.reset(new DataTransfer((char*) url));
+	if (!enabled) dbt_.reset();
+	else if(url) dbt_.reset(new DBCurl(url));
 }
 
 void FileWritter::SetNotifyPath(bool enabled, const char* filepath) {
@@ -59,6 +65,14 @@ void FileWritter::NewFile(nfileptr nfptr) {
 	else {
 		_gLog.Write(LOG_WARN, NULL, "rejects new file for FileWritter terminated");
 	}
+}
+
+void FileWritter::CoupleNetwork(const TcpCPtr tcpc) {
+	tcpc_dp_ = tcpc;
+}
+
+void FileWritter::DecoupleNetowrk() {
+	tcpc_dp_.reset();
 }
 
 void FileWritter::thread_monitor() {
@@ -91,6 +105,7 @@ bool FileWritter::save_first() {
 	bool rslt(false);
 
 	filepath /= ptr->subpath;
+	ptr->subpath = filepath.string();
 	if (!fs::is_directory(filepath) && !fs::create_directory(filepath)) {
 		_gLog.Write(LOG_FAULT, "FileWritter::OnNewFile", "failed to create directory<%s>", filepath.c_str());
 	}
@@ -102,16 +117,30 @@ bool FileWritter::save_first() {
 			fwrite(ptr->filedata.get(), 1, ptr->filesize, fp);
 			fclose(fp);
 
-			if (db_.unique()) {
-				char status[200];
-				db_->regOrigImage(ptr->gid.c_str(), ptr->uid.c_str(), ptr->cid.c_str(),
-						ptr->grid.c_str(), ptr->field.c_str(), ptr->filename.c_str(),
-						filepath.c_str(), ptr->tmobs.c_str(), status);
+			if (dbt_.unique()) {
+				ptime tmobs = from_iso_extended_string(ptr->tmobs) + hours(8);
+				ptime::time_duration_type tdt = tmobs.time_of_day();
+				ptime tmutc(tmobs.date(), hours(tdt.hours()) + minutes(tdt.minutes()) + seconds(tdt.seconds()));
+
+				dbt_->RegImageFile(ptr->cid, ptr->filename, filepath.parent_path().string(),
+						to_iso_string(tmutc), tdt.fractional_seconds());
 			}
 			quenf_.pop_front();
 			rslt = true;
 
 			_gLog.Write("Received: %s", ptr->filename.c_str());
+
+			if (tcpc_dp_.use_count()) {// 通知数据处理已经接收到新的文件
+				int n;
+				apfileinfo proto = boost::make_shared<ascii_proto_fileinfo>();
+				proto->gid = ptr->gid;
+				proto->uid = ptr->uid;
+				proto->cid = ptr->cid;
+				proto->subpath = ptr->subpath;
+				proto->filename = ptr->filename;
+				const char *s = ascproto_->CompactFileInfo(proto, n);
+				tcpc_dp_->Write(s, n);
+			}
 		}
 		else {
 			_gLog.Write(LOG_FAULT, "FileWritter::save_first", "failed to create file<%s>. %s",
