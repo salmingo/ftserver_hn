@@ -5,6 +5,7 @@
  */
 #include <algorithm>
 #include <boost/filesystem.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "globaldef.h"
 #include "GLog.h"
@@ -12,6 +13,7 @@
 
 using namespace boost::filesystem;
 using namespace boost::posix_time;
+using namespace boost::placeholders;
 
 TransferAgent::TransferAgent() {
 	param_.LoadFile(gConfigPath);
@@ -92,33 +94,36 @@ const char *TransferAgent::find_storage() {
 void TransferAgent::free_storage() {
 	path filepath(param_.pathStorage);
 	space_info nfspace;
-	directory_iterator itend = directory_iterator();
-	ptime now = second_clock::local_time(), tmlast;
-	ptime tmdir;
-	int mjd_now = now.date().modjulian_day();
-	int days4 = 4 * 86400; // 删除4日前所有数据
-	int pos;
-	int year, month, day, ymd;
-	string filename;
-
-	_gLog.Write("Cleaning <%s> for LocalStorage", filepath.c_str());
-	for (directory_iterator x = directory_iterator(filepath); x != itend; ++x) {
-		get_filetime(x->path(), tmlast);
-		filename = x->path().filename().string();
-		if (filename.front() != 'G') continue; // 仅清除G开头文件/目录 -- GWAC
-		pos = filename.rfind('_');
-		if (pos == string::npos) continue;
-		ymd = stoi(filename.substr(pos + 1));
-		day = ymd % 100;
-		year = ymd / 10000;
-		month = (ymd - year * 10000 - day) / 100;
-		tmdir = ptime(ptime::date_type(year, month, day));
-		if ((mjd_now - tmdir.date().modjulian_day()) > days4) remove_all(x->path());
-	}
-
 	nfspace = space(filepath);
-	_gLog.Write("free capacity of <%s> is %d GB", filepath.c_str(), nfspace.available >> 30);
-	fwptr_->UpdateStorage(filepath.c_str());
+	if ((nfspace.available >> 30) < param_.minDiskStorage) {
+		directory_iterator itend = directory_iterator();
+		ptime now = second_clock::local_time(), tmlast;
+		ptime tmdir;
+		int mjd_now = now.date().modjulian_day();
+		int days4 = 4 * 86400; // 删除4日前所有数据
+		int pos;
+		int year, month, day, ymd;
+		string filename;
+
+		_gLog.Write("Cleaning <%s> for LocalStorage", filepath.c_str());
+		for (directory_iterator x = directory_iterator(filepath); x != itend; ++x) {
+			get_filetime(x->path(), tmlast);
+			filename = x->path().filename().string();
+			if (filename.front() != 'G') continue; // 仅清除G开头文件/目录 -- GWAC
+			pos = filename.rfind('_');
+			if (pos == string::npos) continue;
+			ymd = stoi(filename.substr(pos + 1));
+			day = ymd % 100;
+			year = ymd / 10000;
+			month = (ymd - year * 10000 - day) / 100;
+			tmdir = ptime(ptime::date_type(year + 2000, month, day));
+			if ((mjd_now - tmdir.date().modjulian_day()) > days4) remove_all(x->path());
+		}
+
+		nfspace = space(filepath);
+		_gLog.Write("free capacity of <%s> is %d GB", filepath.c_str(), nfspace.available >> 30);
+		fwptr_->UpdateStorage(filepath.c_str());
+	}
 }
 
 void TransferAgent::thread_idle() {

@@ -5,8 +5,11 @@
  */
 #include <boost/make_shared.hpp>
 #include <boost/format.hpp>
+#include <boost/bind/bind.hpp>
 #include "FileReceiver.h"
 #include "GLog.h"
+
+using namespace boost::placeholders;
 
 FileRcvPtr make_filercv(FileWritePtr ptr) {
 	return boost::make_shared<FileReceiver>(ptr);

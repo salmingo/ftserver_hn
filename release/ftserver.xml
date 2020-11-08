@@ -1,20 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <version>0.2</version>
-<date>20171121T062826</date>
-<Server Port="4020"/>
-<NTP Enable="true" IP="172.28.1.3" Difference="5"/>
-<Database Enable="true" URL="http://172.28.8.8:8080/gwebend/"/>
+<date>20201105T150452</date>
+<Server PortFS="4020" PortDP="4021"/>
+<NTP Enable="true" IP="192.168.10.111" Difference="1000"/>
+<Database Enable="false" URL="http://192.168.10.20:8080/gwebend/"/>
 <LocalStorage>
     <AutoFree Enable="true" MinimumCapacity="100"/>
-    <DiskNumber Value="3"/>
-    <DiskIndex Value="0"/>
-    <PathRoot#1 Name="/data1"/>
-    <PathRoot#2 Name="/data2"/>
-    <PathRoot#3 Name="/data3"/>
+    <PathRoot Name="/Users/lxm/Data"/>
 </LocalStorage>
-<Template>
-    <AutoFree Enable="true" MinimumCapacity="100"/>
-    <Directory Number="2"/>
-    <PathRoot#1 Name="/data/GWAC/output"/>
-    <PathRoot#2 Name="/data/GWAC/gwacsub"/>
-</Template>

@@ -20,8 +20,6 @@ using std::vector;
 struct param_config {// 软件配置参数
 	uint16_t portFS;	//< 网络服务端口: 文件服务
 	uint16_t portDP;	//< 网络服务端口: 数据处理
-	bool bRepeat;		//< 启用转发
-	string hostRepeat;	//< 转发服务器IP地址
 	bool bNTP;		//< 是否启用NTP
 	string ipNTP;	//< NTP主机地址
 	int diffNTP;	//< 时钟最大偏差
@@ -54,13 +52,11 @@ public:
 
 		pt.add("Server.<xmlattr>.PortFS",    4020);
 		pt.add("Server.<xmlattr>.PortDP",    4021);
-		pt.add("Repeat.<xmlattr>.Enable",    false);
-		pt.add("Repeat.Server.<xmlattr>.IP", "172.28.9.14");
 		pt.add("NTP.<xmlattr>.Enable",       true);
-		pt.add("NTP.<xmlattr>.IP",           "172.28.9.251");
-		pt.add("NTP.<xmlattr>.Difference",   100);
+		pt.add("NTP.<xmlattr>.IP",           "192.168.10.111");
+		pt.add("NTP.<xmlattr>.Difference",   1000);
 		pt.add("Database.<xmlattr>.Enable",  false);
-		pt.add("Database.<xmlattr>.URL",     "http://172.28.9.14:8080/gwebend/");
+		pt.add("Database.<xmlattr>.URL",     "http://192.168.10.20:8080/gwebend/");
 
 		ptree& node1 = pt.add("LocalStorage", "");
 		node1.add("AutoFree.<xmlattr>.Enable",          true);
@@ -90,18 +86,14 @@ public:
 					portFS = child.second.get("<xmlattr>.PortFS", 4020);
 					portDP = child.second.get("<xmlattr>.PortDP", 4021);
 				}
-				else if (boost::iequals(child.first, "Repeat")) {
-					bRepeat    = child.second.get("<xmlattr>.Enable",    false);
-					hostRepeat = child.second.get("Server.<xmlattr>.IP", "172.28.9.14");
-				}
 				else if (boost::iequals(child.first, "NTP")) {
 					bNTP    = child.second.get("<xmlattr>.Enable",     true);
-					ipNTP   = child.second.get("<xmlattr>.IP",         "172.28.9.251");
+					ipNTP   = child.second.get("<xmlattr>.IP",         "192.168.10.111");
 					diffNTP = child.second.get("<xmlattr>.Difference", 500);
 				}
 				else if (boost::iequals(child.first, "Database")) {
 					bDB   = child.second.get("<xmlattr>.Enable", false);
-					urlDB = child.second.get("<xmlattr>.URL",    "http://172.28.8.8:8080/gwebend/");
+					urlDB = child.second.get("<xmlattr>.URL",    "http://192.168.10.20:8080/gwebend/");
 				}
 				else if (boost::iequals(child.first, "LocalStorage")) {
 					bFreeStorage   = child.second.get("AutoFree.<xmlattr>.Enable", true);
